@@ -3,3 +3,4 @@ python-engineio[asyncio_client]
 wave
 scipy
 numpy
+librosa
