@@ -15,7 +15,7 @@ async def index(request):
     with open('index.html') as f:
         return web.Response(text=f.read(), content_type='text/html')
     
-    
+global_data = []
 
 @sio.on('mic')
 async def print_message(sid, *data):
@@ -26,8 +26,9 @@ async def print_message(sid, *data):
 
     fs = 44100
     out_f = '/wav_files/out.wav'
-
-    wavf.write(out_f, fs, np.array(data))
+    global_data.extend(list(data))
+    print(len(global_data))
+    wavf.write(out_f, fs, np.array(global_data, dtype=np.int16))
     await sio.emit('mic', "completed")
 
   
