@@ -1,2 +1,5 @@
-python-socketio
 aiohttp
+python-engineio[asyncio_client]
+wave
+scipy
+numpy

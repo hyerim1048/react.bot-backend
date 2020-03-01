@@ -1,0 +1,17 @@
+version: '3.5'
+services:
+  react_bot_backend_svc:
+    container_name: react-bot-backend-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - /Users/lim/Downloads/Projects/facebook-hackerthon/react.bot-backend/wav_files:/wav_files
+    working_dir: /
+    stdin_open: true
+    tty: true
+    image: fb-back:latest
+    ports: 
+      - "8080:8080"
+    command: python /server.py
+
