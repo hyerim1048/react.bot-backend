@@ -4,3 +4,4 @@ wave
 scipy
 numpy
 librosa
+webrtcvad
