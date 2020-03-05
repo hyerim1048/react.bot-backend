@@ -18,19 +18,22 @@ async def index(request):
     with open('index.html') as f:
         return web.Response(text=f.read(), content_type='text/html')
     
+# global
 TMP_DIR = '/wav_files'
 vad = webrtcvad.Vad()
 vad.set_mode(1)
 sample_rate = 16000
-frame_duration = 10 
+frame_duration = 10 # ms
 length_per_frame = int(sample_rate * frame_duration / 1000)
+one_second = int(1000/frame_duration)
+redis = {}
+
 @sio.on('mic')
 async def print_message(sid, *data):
 
     print("Socket ID: ", sid)
     print(len(data), type(data))
 
-    fs = 16000
     filename = f"{TMP_DIR}/{sid}.wav"
     vad_filename = f"{TMP_DIR}/{sid}_vad.wav"
     try: 
@@ -39,7 +42,7 @@ async def print_message(sid, *data):
         print(type(prev_data),len(prev_data))
         prev_data.extend(list(data))
         print(len(prev_data))
-        wavf.write(filename, fs, np.array(prev_data, dtype=np.int16))
+        wavf.write(filename, sample_rate, np.array(prev_data, dtype=np.int16))
 
 
         # vad test
@@ -53,11 +56,15 @@ async def print_message(sid, *data):
             frame = data[length_per_frame*idx:length_per_frame*(idx+1)]
             print(frame)
             if vad.is_speech(b"".join(struct.pack('<h',d) for d in frame), sample_rate):
+                redis['nonspeech_num'] = redis['nonspeech_num'] + 1
                 vad_data.extend(frame)
         print("vad: ", len(vad_data))
         vad_prev_data.extend(list(vad_data))
-        wavf.write(vad_filename, fs, np.array(vad_prev_data, dtype=np.int16))
+        wavf.write(vad_filename, sample_rate, np.array(vad_prev_data, dtype=np.int16))
 
+        if redis['nonspeech_num'] > one_second:
+            redis['nonspeech_num'] = 0
+            await sio.emit('fromSerer', "Happy")
         #vad_data = [data[idx] for idx in range(int(frame_num_per_data))\
         #    if vad.is_speech(data[length_per_frame*(idx-1):length_per_frame*idx], sample_rate)]
         
@@ -66,11 +73,12 @@ async def print_message(sid, *data):
         generator = MFCC_generator()
         arr = generator.get_wav_mfcc(filename, start=0, duration=10)
         np.save("/wav_files/sample_mfcc.npy", arr)
-        await sio.emit('mic', "completed")
+        
   
     except OSError as e: 
-        wavf.write(filename, fs, np.array(data, dtype=np.int16))
-        wavf.write(vad_filename, fs, np.array(data, dtype=np.int16))
+        redis['nonspeech_num'] = 0
+        wavf.write(filename, sample_rate, np.array(data, dtype=np.int16))
+        wavf.write(vad_filename, sample_rate, np.array(data, dtype=np.int16))
 
 
 # router
