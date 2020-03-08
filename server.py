@@ -6,6 +6,7 @@ import numpy as np
 from preprocess.MFCC_generator import MFCC_generator
 import webrtcvad 
 import struct
+import speech_recognition as speech_recog
 
 # Async Socket IO Server 
 sio = socketio.AsyncServer() 
@@ -48,22 +49,24 @@ async def print_message(sid, *data):
         # vad test
         total_length = len(data)
         frame_num_per_data = total_length/length_per_frame  
-        print(frame_num_per_data)
         vad_prev_wav = wavf.read(vad_filename, mmap=False)
         vad_prev_data = list(vad_prev_wav[1])
         vad_data = []
         for idx in range(int(frame_num_per_data)):
             frame = data[length_per_frame*idx:length_per_frame*(idx+1)]
-            print(frame)
             if vad.is_speech(b"".join(struct.pack('<h',d) for d in frame), sample_rate):
                 redis['nonspeech_num'] = redis['nonspeech_num'] + 1
                 vad_data.extend(frame)
-        print("vad: ", len(vad_data))
         vad_prev_data.extend(list(vad_data))
         wavf.write(vad_filename, sample_rate, np.array(vad_prev_data, dtype=np.int16))
 
         if redis['nonspeech_num'] > one_second:
             redis['nonspeech_num'] = 0
+            recog = speech_recog.Recognizer()
+            with speech_recog.AudioFile(vad_filename) as audio_file:
+                print("here ********************")
+                audio_content = recog.record(audio_file)
+                print(recog.recognize_google(audio_content))
             await sio.emit('fromSerer', "Happy")
         #vad_data = [data[idx] for idx in range(int(frame_num_per_data))\
         #    if vad.is_speech(data[length_per_frame*(idx-1):length_per_frame*idx], sample_rate)]
