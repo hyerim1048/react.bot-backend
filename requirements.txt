@@ -6,3 +6,4 @@ numpy
 librosa
 webrtcvad
 SpeechRecognition
+requests

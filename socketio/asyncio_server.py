@@ -280,8 +280,8 @@ class AsyncServer(server.Server):
         namespace = namespace or '/'
         self.logger.info('received event "%s" from %s [%s]', data[0], sid,
                          namespace)
-        ll = f'received event "{data[0]}" from {sid} [{namespace}]'
-        print(ll)
+        #ll = f'received event "{data[0]}" from {sid} [{namespace}]'
+        #print(ll)
 
         await self._handle_event_internal(self, sid, data, namespace, id)
 

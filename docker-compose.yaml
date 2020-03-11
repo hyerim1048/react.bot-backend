@@ -6,6 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
+      - /Users/lim/Downloads/Projects/facebook-hackerthon/react.bot-backend:/backend
       - /Users/lim/Downloads/Projects/facebook-hackerthon/react.bot-backend/wav_files:/wav_files
     working_dir: /
     stdin_open: true
