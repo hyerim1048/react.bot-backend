@@ -86,7 +86,6 @@ app.add_routes([web.get('/', hello)])
 if __name__ == '__main__':
     web.run_app(app)
 
-
 """
             # request text inference and await 
             recog = speech_recog.Recognizer()
