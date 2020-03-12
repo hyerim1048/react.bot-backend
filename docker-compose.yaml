@@ -1,7 +1,7 @@
 version: '3.5'
 services:
-  react_bot_backend_svc:
-    container_name: react-bot-backend-container
+  react_bot_backend_svc_8080:
+    container_name: react-bot-backend-container_8080
     build:
       context: .
       dockerfile: Dockerfile

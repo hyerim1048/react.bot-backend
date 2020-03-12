@@ -46,7 +46,8 @@ def run_vad(frame_num_per_data, data):
             redis['nonspeech_num'] = redis['nonspeech_num'] + 1
             print("here")
                 
-
+async def hello(request):
+        return web.Response(text="Hello, world")
 
 @sio.on('mic')
 async def print_message(sid, *data):
@@ -65,7 +66,7 @@ async def print_message(sid, *data):
             result = {"result":"happy"}
             print("여기까진 왔다", len(redis['vad_result']))
             headers = {'Content-Type': 'application/json', 'Accept':'application/json'}
-            result = requests.post("http://192.168.123.104:8000/predict",\
+            result = requests.post("http://35.221.251.166:8000/predict",\
                 data=json.dumps({'data':list(redis['vad_result'])}), headers=headers)
             if result:
                 print(result.text)
@@ -80,6 +81,7 @@ async def print_message(sid, *data):
         redis['nonspeech_num'] = 0
         wavf.write(filename, sample_rate, np.array(data, dtype=np.int16))
 
+app.add_routes([web.get('/', hello)])
 
 if __name__ == '__main__':
     web.run_app(app)
