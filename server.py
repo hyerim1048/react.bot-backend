@@ -8,6 +8,7 @@ import webrtcvad
 import struct
 import speech_recognition as speech_recog
 import requests
+import json
 
 
 sio = socketio.AsyncServer() 
@@ -62,15 +63,15 @@ async def print_message(sid, *data):
         if redis['nonspeech_num'] > one_second:
             # request speech inference and await  
             result = {"result":"happy"}
-            print("여기까진 왔다")
+            print("여기까진 왔다", len(redis['vad_result']))
             headers = {'Content-Type': 'application/json', 'Accept':'application/json'}
-            result = await requests.post("http://localhost:8000",\
-                data={'data':list(redis['vad_result'])}, headers=headers)
+            result = requests.post("http://192.168.123.104:8000/predict",\
+                data=json.dumps({'data':list(redis['vad_result'])}), headers=headers)
             if result:
-                print(result.text())
+                print(result.text)
                 redis['nonspeech_num'] = 0
                 redis['vad_result'] = []
-                await sio.emit('fromSerer', result)
+                await sio.emit('fromSerer', result.text)
             
 
     except OSError as e: 

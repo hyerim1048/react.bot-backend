@@ -16,22 +16,20 @@ app = Flask(__name__)
 def hello():
     return "Classification example\n"
 
-@app.route('/predict', methods=['GET','POST'])
+@app.route('/predict', methods=['POST'])
 def predict():
-    print(request.json)
-    print (request.is_json)
+    
     content = request.get_json()
-    print (content['data'])
-    return 'JSON posted'
     t = time.time() # get execution time
     vad_data = content['data'] # fix 
+    print(len(vad_data))
     tmp_wav_filename = "test.wav"
     wavf.write(tmp_wav_filename, SAMPLE_RATE, np.array(vad_data, dtype=np.int16))
     label = bilstm.predict(tmp_wav_filename)
     dt = time.time() - t
     # #app.logger.info
     print("Execution time: %0.02f seconds" % (dt))
-    print(" %s classified as %s" % (label))
+    print("%s classified as %s" % (len(content['data']), label))
     return jsonify(label)
 
 if __name__ == '__main__':
