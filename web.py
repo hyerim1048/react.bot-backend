@@ -9,7 +9,7 @@ import struct
 import speech_recognition as speech_recog
 import requests
 import json
-
+import time 
 
 sio = socketio.AsyncServer() 
 app = web.Application() 
@@ -27,7 +27,8 @@ frame_duration = 10 # ms
 length_per_frame = int(sample_rate * frame_duration / 1000)
 one_second = 10#int(1000/frame_duration/2)
 
-
+# speech 
+recog = speech_recog.Recognizer()
 
 def append_and_save_wav_data(filename, data):
     prev_wav = wavf.read(filename, mmap=False)
@@ -44,8 +45,29 @@ def run_vad(frame_num_per_data, data):
                 redis['nonspeech_num'] = 0
         else:
             redis['nonspeech_num'] = redis['nonspeech_num'] + 1
-            print("here")
-                
+
+def speech_recognition(audio):
+    filename = "test.wav"
+    wavf.write(filename, sample_rate, np.array(audio, dtype=np.int16))
+    try:
+        with speech_recog.AudioFile(filename) as audio_file:
+            audio_content = recog.record(audio_file)
+            #print(len(audio_content), type(audio_content))
+            with open ('./speech_key.json', 'r') as f:
+                credential = f.read()
+                context = recog.recognize_google_cloud(audio_content, language = "en-us", credentials_json = credential)
+                print ("Google Speech Recognition thinks you said" + context)
+            #text_from_audio = recog.recognize_google_cloud(audio_content, GOOGLE_CLOUD_SPEECH_CREDENTIALS)
+            #print(text_from_audio)
+            return context
+
+    except speech_recog.UnknownValueError:
+        print("Google Cloud Speech could not understand audio")
+        redis['nonspeech_num'] = 0
+        return None
+    except speech_recog.RequestError as e:
+        print("Could not request results from Google Cloud Speech service; {0}".format(e))
+                    
 async def hello(request):
         return web.Response(text="Hello, world")
 
@@ -62,18 +84,26 @@ async def print_message(sid, *data):
             redis['nonspeech_num'] = 0
         print(len(redis['vad_result']),redis['nonspeech_num'],one_second)
         if redis['nonspeech_num'] > one_second:
-            # request speech inference and await  
-            result = {"result":"happy"}
             print("여기까진 왔다", len(redis['vad_result']))
-            headers = {'Content-Type': 'application/json', 'Accept':'application/json'}
-            result = requests.post("http://35.221.251.166:8000/predict",\
-                data=json.dumps({'data':list(redis['vad_result'])}), headers=headers)
-            if result:
-                print(result.text)
-                redis['nonspeech_num'] = 0
-                redis['vad_result'] = []
-                await sio.emit('fromSerer', result.text)
-            
+            t1 = time.time()
+            recog_data = "pass!" # speech_recognition(redis['vad_result'])
+            dt = time.time() - t1
+            print("Google Cloud Execution time: %0.02f seconds" % (dt))
+            t1 = time.time()
+            if recog_data:
+                headers = {'Content-Type': 'application/json', 'Accept':'application/json'}
+                result = requests.post("http://35.221.251.166:8000/predict",\
+                    data=json.dumps({'data':list(redis['vad_result'])}), headers=headers)
+                dt = time.time() - t1
+                print("Sentiment Analysis time: %0.02f seconds" % (dt))
+                if result:
+                    print(result.text)
+                    redis['nonspeech_num'] = 0
+                    await sio.emit('fromSerer', result.text)
+
+    # #app.logger.info
+     
+    
 
     except OSError as e: 
         print(e)
@@ -92,7 +122,7 @@ if __name__ == '__main__':
             try:
                 with speech_recog.AudioFile(filename) as audio_file:
                     audio_content = recog.record(audio_file)
-                    text_from_audio = recog.recognize_google(audio_content)
+                    text_from_audio = recog.recognize_google_cloud(audio_content,"./speech_key.json")
                      except: 
                 print("error")
 """

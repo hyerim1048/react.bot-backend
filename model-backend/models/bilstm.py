@@ -7,7 +7,7 @@ from torch.autograd import Variable
 from models.utils.feature_extractor_utils import *
 
 
-state_dict_directory = "/models/data/bilstm_state_dict.pt"
+state_dict_directory = "/models/data/bilstm_augmented_state_dict.pt"
 
 class BiLSTM(nn.Module):
     def __init__(
@@ -45,8 +45,25 @@ class BiLSTM(nn.Module):
             hidden_size=hidden_dim,
             bidirectional=True,
         )
-        self.dense_hidden = nn.Linear(hidden_dim * 2, dense_dim)
+        self.dense_hidden = nn.Sequential(nn.Linear(hidden_dim*2, dense_dim),
+                                         nn.ReLU(inplace=True))
         self.dense_out = nn.Linear(dense_dim, output_dim)
+
+
+    def forward(self, audio_features):
+        # audio_features = (seq_len, batch, input_size)
+        lstm_output, (h_1, c_1) = self.bilstm(audio_features)
+
+        # (seq_len, batch, input_size)  => (batch, input_size), only last output
+        hidden_1 = self.dense_hidden(lstm_output[-1])
+        y = self.dense_out(hidden_1)
+
+        # for cross entropy loss
+        if self.is_training:
+            return y
+        else:
+            return F.softmax(y)
+
 
     def forward(self, audio_features):
         # audio_features = (seq_len, batch, input_size)
