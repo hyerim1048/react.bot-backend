@@ -27,6 +27,9 @@ def append_and_save_wav_data(filename, data):
                
 async def hello(request):
         return web.Response(text="Hello, world")
+@sio.on("fromClient")
+async def from_client(sid, data): 
+    print(data)
 
 @sio.on("mic_on")
 async def start_message(sid, data): 
@@ -50,8 +53,8 @@ async def start_message(sid, data):
 
 @sio.on('mic')
 async def print_message(sid, *data):
-    print("total_length", len(data))
     redis[sid]['result'].extend(list(data))
+    print("total_length", len(data))
 
 
 app.add_routes([web.get('/', hello)])
