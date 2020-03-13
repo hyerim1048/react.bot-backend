@@ -5,6 +5,5 @@ WORKDIR /
 COPY ./requirements.txt /
 RUN pip install -r /requirements.txt
 RUN pip install eventlet && pip install gunicorn
-RUN pip install oauth2client google-api-python-client gcloud
 COPY . /
 
