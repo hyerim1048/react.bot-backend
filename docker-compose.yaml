@@ -6,13 +6,12 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - /Users/lim/Downloads/Projects/facebook-hackerthon/react.bot-backend:/backend
-      - /Users/lim/Downloads/Projects/facebook-hackerthon/react.bot-backend/wav_files:/wav_files
+      - /home/subhr1048/wav_files:/wav_files
     working_dir: /
     stdin_open: true
     tty: true
     image: fb-back:latest
     ports: 
-      - "8080:8080"
+      - "80:8080"
     command: gunicorn web:app --bind 0.0.0.0:8080 --worker-class aiohttp.worker.GunicornWebWorker --reload 
 
