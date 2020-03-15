@@ -25,11 +25,11 @@ def append_and_save_wav_data(filename, data):
     prev_data.extend(list(data))
     wavf.write(filename, sample_rate, np.array(prev_data, dtype=np.int16))
                
-async def hello(request):
-        return web.Response(text="Hello, world")
 @sio.on("fromClient")
 async def from_client(sid, data): 
     print(data)
+
+# 0: angry, 1, happy, 2 neutral, 3 sad 
 
 @sio.on("mic_on")
 async def start_message(sid, data): 
@@ -48,7 +48,7 @@ async def start_message(sid, data):
             if result:
                 print(result.text)
                 redis['nonspeech_num'] = 0
-                await sio.emit('fromSerer', result.text)
+                await sio.emit('fromSerer', result.text))
         redis[sid]['result'] = []
 
 @sio.on('mic')
@@ -57,7 +57,6 @@ async def print_message(sid, *data):
     print("total_length", len(data))
 
 
-app.add_routes([web.get('/', hello)])
 
 if __name__ == '__main__':
     web.run_app(app)
